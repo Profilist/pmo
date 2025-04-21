@@ -12,9 +12,9 @@ import {
   GetTask,
 } from "../wailsjs/go/main/App";
 
-const WORK_TIME = 5; // change to 25 * 60 for production
-const SHORT_BREAK = 4; // change to 5 * 60 for production
-const LONG_BREAK = 10; // change to 30 * 60 for production
+const WORK_TIME = 25 * 60; // change to 25 * 60 for production
+const SHORT_BREAK = 5 * 60; // change to 5 * 60 for production
+const LONG_BREAK = 30 * 60; // change to 30 * 60 for production
 
 export default function PomodoroTimer() {
   const [taskName, setTaskName] = useState("");
@@ -184,7 +184,7 @@ export default function PomodoroTimer() {
       <div className="relative mb-2">
         <Input
           type="text"
-          placeholder="Create a task"
+          placeholder="Task"
           value={taskName}
           onChange={handleTaskInputChange}
           onKeyDown={handleTaskInputKeyDown}
@@ -201,6 +201,9 @@ export default function PomodoroTimer() {
           {formatTime(timeLeft)}
         </div>
         <div className="flex space-x-2">
+          <div className="h-8 w-8 rounded-full p-0 bg-zinc-800 text-white flex items-center justify-center">
+            {pomodoroCount+1}
+          </div>
           {!isRunning ? (
             <Button
               onClick={handleStart}
