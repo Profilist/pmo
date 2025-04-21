@@ -6,20 +6,18 @@ import (
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
+	"github.com/wailsapp/wails/v2/pkg/options/windows"
 )
 
-//go:embed all:frontend/dist
 var assets embed.FS
 
 func main() {
-	// Create an instance of the app structure
 	app := NewApp()
 
-	// Create application with options
 	err := wails.Run(&options.App{
-		Title:     "pomodoro-app",
+		Title:     "Pomodoro",
 		Width:     320,
-		Height:    220,
+		Height:    145,
 		Frameless: true,
 		AssetServer: &assetserver.Options{
 			Assets: assets,
@@ -28,6 +26,12 @@ func main() {
 		OnStartup:        app.startup,
 		Bind: []interface{}{
 			app,
+		},
+		Windows: &windows.Options{
+			DisableWindowIcon:                 true,
+			DisableFramelessWindowDecorations: false,
+			WebviewIsTransparent:              true,
+			WindowIsTranslucent:               true,
 		},
 	})
 

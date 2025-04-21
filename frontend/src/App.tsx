@@ -1,20 +1,20 @@
 import { useState, useEffect, useRef } from "react";
-import { Play, Pause, RotateCcw } from "lucide-react";
+import { Play, Pause, RotateCcw, GripHorizontal } from "lucide-react";
 import { Button } from "./components/ui/button";
 import { Input } from "./components/ui/input";
 import { cn } from "./lib/utils";
+import notificationSound from './assets/notification.mp3'
 import {
   StartTimer,
   PauseTimer,
   ResetTimer,
   SetTask,
-  GetTimer,
   GetTask,
 } from "../wailsjs/go/main/App";
 
 export default function PomodoroTimer() {
   const [taskName, setTaskName] = useState("");
-  const [timeLeft, setTimeLeft] = useState(25 * 60); // 25 minutes in seconds
+  const [timeLeft, setTimeLeft] = useState(5); // 5 seconds for testing
   const [isRunning, setIsRunning] = useState(false);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -31,7 +31,7 @@ export default function PomodoroTimer() {
             setIsRunning(false);
 
             // Play notification sound
-            new Audio("/notification.mp3")
+            new Audio(notificationSound)
               .play()
               .catch((err) => console.log("Audio playback failed:", err));
 
@@ -70,15 +70,15 @@ export default function PomodoroTimer() {
     
     try {
       // If we're not paused, this is a new timer
-      if (!taskName && timeLeft === 25 * 60) {
+      if (!taskName && timeLeft === 5) {
         return; // Don't start if no task and timer is at initial state
       }
 
       // Only set task and reset time if we're not resuming from pause
-      if (timeLeft === 25 * 60) {
+      if (timeLeft === 5) {
         await SetTask(taskName);
-        await StartTimer(25 * 60); // 25 minutes in seconds
-        setTimeLeft(25 * 60);
+        await StartTimer(5); // 5 seconds for testing
+        setTimeLeft(5);
       } else {
         // We're resuming from pause
         await StartTimer(timeLeft);
@@ -103,7 +103,7 @@ export default function PomodoroTimer() {
     try {
       await ResetTimer();
       setIsRunning(false);
-      setTimeLeft(25 * 60);
+      setTimeLeft(5);
       setTaskName('');
     } catch (error) {
       console.error('Failed to reset timer:', error);
@@ -121,15 +121,23 @@ export default function PomodoroTimer() {
   };
 
   // Calculate progress percentage
-  const progressPercentage = ((25 * 60 - timeLeft) / (25 * 60)) * 100;
+  const progressPercentage = ((5 - timeLeft) / (5)) * 100;
 
   return (
     <div
       ref={containerRef}
       className={cn(
-        "fixed rounded-xl bg-black/80 shadow-lg select-none transition-all duration-300 overflow-hidden w-80 p-4"
+        "fixed rounded-xl bg-black/80 shadow-lg select-none transition-all duration-300 overflow-hidden w-80"
       )}
     >
+      {/* Drag handle */}
+      <div 
+        className="h-6 flex items-center justify-center cursor-move bg-zinc-900/50 hover:bg-zinc-900/80 transition-colors"
+        style={{ '--wails-draggable': 'drag' } as React.CSSProperties}
+      >
+        <GripHorizontal className="w-4 h-4 text-zinc-600" />
+      </div>
+      <div className="p-4">
       <div className="relative mb-2">
         <Input
           type="text"
@@ -184,6 +192,7 @@ export default function PomodoroTimer() {
           className="bg-white h-full transition-all duration-1000 ease-linear"
           style={{ width: `${progressPercentage}%` }}
         />
+      </div>
       </div>
     </div>
   );
