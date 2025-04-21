@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { X, Calendar as CalendarIcon } from "lucide-react";
+import { X, Calendar as CalendarIcon, GripHorizontal } from "lucide-react";
 import { Button } from "./ui/button";
 import { Calendar } from "./ui/calendar";
 import { GetSessionsByDate, SetWindowHeight } from "../../wailsjs/go/main/App";
@@ -34,12 +34,14 @@ export function SessionHistory({ isOpen, onClose }: SessionHistoryProps) {
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   useEffect(() => {
-    if (isOpen) {
-      // Make window taller when history is opened
-      SetWindowHeight(600);
-    } else {
-      // Restore original height when closed
-      SetWindowHeight(145);
+    if (window.runtime) {
+      if (isOpen) {
+        // Make window taller when history is opened
+        SetWindowHeight(500);
+      } else {
+        // Restore original height when closed
+        SetWindowHeight(145);
+      }
     }
   }, [isOpen]);
 
@@ -86,7 +88,10 @@ export function SessionHistory({ isOpen, onClose }: SessionHistoryProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-zinc-900/100 flex flex-col">
+    <div className="fixed inset-0 bg-[#06080c] flex flex-col">
+      <div className="h-6 flex items-center justify-center p-2 border-zinc-800 cursor-move bg-zinc-900/50 hover:bg-zinc-900/80 transition-colors" style={{ '--wails-draggable': 'drag' } as React.CSSProperties}>
+        <GripHorizontal className="h-4 w-4 text-zinc-600" />
+      </div>
       <div className="flex justify-between items-start p-4 border-b border-zinc-800">
         <div className="flex-1 relative">
           <Button
@@ -170,7 +175,7 @@ export function SessionHistory({ isOpen, onClose }: SessionHistoryProps) {
             No study sessions recorded yet
           </div>
         ) : (
-          <div className="space-y-2 overflow-y-auto max-h-[400px]">
+          <div className="space-y-2 overflow-y-auto max-h-[360px] pr-2 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-zinc-800 [&::-webkit-scrollbar-thumb]:bg-zinc-600 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-zinc-500">
             {sessions.map((session, index) => (
               <div
                 key={index}
@@ -180,16 +185,16 @@ export function SessionHistory({ isOpen, onClose }: SessionHistoryProps) {
                   "text-sm text-zinc-200"
                 )}
               >
-                <div>
-                  <div className="font-medium">{session.taskName}</div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-medium truncate">{session.taskName}</div>
                   <div className="text-xs text-zinc-400">{formatTimeRange(session.startTime, session.endTime)}</div>
                 </div>
-                <div className="flex items-center gap-3 text-zinc-400">
+                <div className="flex items-center gap-3 text-zinc-400 shrink-0 ml-4">
                   <div className="text-xs">
                     {session.completedCycles} {session.completedCycles === 1 ? "cycle" : "cycles"}
                   </div>
                   {session.isCompleted ? (
-                    <div className="text-xs px-1.5 py-0.5 rounded-full bg-zinc-700/50 text-emerald-400">Complete</div>
+                    <div className="text-xs px-1.5 py-0.5 rounded-full bg-zinc-700/50 text-emerald-400">Done</div>
                   ) : (
                     <div className="text-xs px-1.5 py-0.5 rounded-full bg-zinc-700/50 text-amber-400">Partial</div>
                   )}
