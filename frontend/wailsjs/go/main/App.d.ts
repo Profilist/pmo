@@ -3,7 +3,7 @@
 
 export function GetTask():Promise<string>;
 
-export function GetTimer():Promise<number|boolean>;
+export function GetTimer():Promise<any>;
 
 export function PauseTimer():Promise<void>;
 
