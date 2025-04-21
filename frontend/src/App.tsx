@@ -42,11 +42,6 @@ export default function PomodoroTimer() {
             if (timerRef.current) clearInterval(timerRef.current);
             setIsRunning(false);
 
-            // Save partial session if at least one cycle is completed
-            if (sessionStartTime && pomodoroCount > 0) {
-              SavePartialSession(sessionStartTime, new Date(), pomodoroCount);
-            }
-
             // Play notification sound
             new Audio(notificationSound)
               .play()
