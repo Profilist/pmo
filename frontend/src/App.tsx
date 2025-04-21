@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
-import { Play, Pause, RotateCcw, GripHorizontal } from "lucide-react";
+import { Play, Pause, RotateCcw, GripHorizontal, BookOpen } from "lucide-react";
+import { SessionHistory } from "./components/SessionHistory";
 import { Button } from "./components/ui/button";
 import { Input } from "./components/ui/input";
 import { cn } from "./lib/utils";
@@ -10,6 +11,8 @@ import {
   ResetTimer,
   SetTask,
   GetTask,
+  SaveCompletedSession,
+  SavePartialSession,
 } from "../wailsjs/go/main/App";
 
 const WORK_TIME = 25 * 60; // change to 25 * 60 for production
@@ -22,6 +25,9 @@ export default function PomodoroTimer() {
   const [isRunning, setIsRunning] = useState(false);
   const [pomodoroCount, setPomodoroCount] = useState(0);
   const [isBreak, setIsBreak] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const containerRef = useRef(null);
@@ -35,6 +41,11 @@ export default function PomodoroTimer() {
             // Stop the timer
             if (timerRef.current) clearInterval(timerRef.current);
             setIsRunning(false);
+
+            // Save partial session if at least one cycle is completed
+            if (sessionStartTime && pomodoroCount > 0) {
+              SavePartialSession(sessionStartTime, new Date(), pomodoroCount);
+            }
 
             // Play notification sound
             new Audio(notificationSound)
@@ -59,10 +70,14 @@ export default function PomodoroTimer() {
             } else {
               // Break finished
               if (pomodoroCount === 0) {
-                // After long break, allow new task
+                // After long break, save completed session and reset
+                if (sessionStartTime) {
+                  SaveCompletedSession(sessionStartTime, new Date(), 4);
+                }
                 ResetTimer();
                 setTaskName("");
                 setTimeLeft(WORK_TIME);
+                setSessionStartTime(null);
               } else {
                 // Start next work period
                 setTimeLeft(WORK_TIME);
@@ -106,33 +121,37 @@ export default function PomodoroTimer() {
   };
 
   const handleStart = async () => {
-    if (isRunning) return;
-    
-    try {
-      // If we're not paused, this is a new timer
-      if (!taskName && timeLeft === WORK_TIME) {
-        return; // Don't start if no task and timer is at initial state
+    if (!isRunning) {
+      if (!sessionStartTime) {
+        setSessionStartTime(new Date());
       }
+      try {
+        // If we're not paused, this is a new timer
+        if (!taskName && timeLeft === WORK_TIME) {
+          return; // Don't start if no task and timer is at initial state
+        }
 
-      // Only set task and reset time if we're not resuming from pause
-      if (timeLeft === WORK_TIME) {
-        await SetTask(taskName);
-        await StartTimer(WORK_TIME);
-        setTimeLeft(WORK_TIME);
-      } else {
-        // We're resuming from pause
-        await StartTimer(timeLeft);
+        // Only set task and reset time if we're not resuming from pause
+        if (timeLeft === WORK_TIME) {
+          await SetTask(taskName);
+          await StartTimer(WORK_TIME);
+          setTimeLeft(WORK_TIME);
+        } else {
+          // We're resuming from pause
+          await StartTimer(timeLeft);
+        }
+        setIsRunning(true);
+        setIsPaused(false);
+      } catch (error) {
+        console.error('Failed to start timer:', error);
       }
-      
-      setIsRunning(true);
-    } catch (error) {
-      console.error('Failed to start timer:', error);
     }
   };
 
   const handlePause = async () => {
     try {
       await PauseTimer();
+      setIsPaused(true);
       setIsRunning(false);
     } catch (error) {
       console.error('Failed to pause timer:', error);
@@ -141,12 +160,18 @@ export default function PomodoroTimer() {
 
   const handleReset = async () => {
     try {
+      // Save partial session if at least one cycle is completed
+      if (sessionStartTime && pomodoroCount > 0) {
+        SavePartialSession(sessionStartTime, new Date(), pomodoroCount);
+      }
       await ResetTimer();
       setIsRunning(false);
+      setIsPaused(false);
       setTimeLeft(WORK_TIME);
       setTaskName('');
       setPomodoroCount(0);
       setIsBreak(false);
+      setSessionStartTime(null);
     } catch (error) {
       console.error('Failed to reset timer:', error);
     }
@@ -182,15 +207,25 @@ export default function PomodoroTimer() {
       </div>
       <div className="p-4">
       <div className="relative mb-2">
-        <Input
-          type="text"
-          placeholder="Task"
-          value={taskName}
-          onChange={handleTaskInputChange}
-          onKeyDown={handleTaskInputKeyDown}
-          disabled={isRunning}
-          className="bg-zinc-800/80 border-none text-white placeholder:text-zinc-500 focus-visible:ring-0 focus-visible:ring-offset-0"
-        />
+        <div className="relative">
+          <Input
+            type="text"
+            placeholder="Task"
+            value={taskName}
+            onChange={handleTaskInputChange}
+            onKeyDown={handleTaskInputKeyDown}
+            disabled={isRunning || isBreak || isPaused}
+            className="bg-zinc-800/80 border-none text-white placeholder:text-zinc-500 focus-visible:ring-0 focus-visible:ring-offset-0 pr-10"
+          />
+          <Button
+            variant="ghost"
+            size="sm"
+            className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0 hover:bg-zinc-700/50"
+            onClick={() => setIsHistoryOpen(true)}
+          >
+            <BookOpen className="h-4 w-4 text-zinc-400" />
+          </Button>
+        </div>
         {taskName.trim() === "" && (
           <div className="absolute bottom-1 left-3 text-xs text-zinc-500 pointer-events-none"></div>
         )}
@@ -240,6 +275,7 @@ export default function PomodoroTimer() {
         />
       </div>
       </div>
+      <SessionHistory isOpen={isHistoryOpen} onClose={() => setIsHistoryOpen(false)} />
     </div>
   );
 }

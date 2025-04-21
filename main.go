@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"embed"
 
 	"github.com/wailsapp/wails/v2"
@@ -15,7 +16,7 @@ func main() {
 	app := NewApp()
 
 	err := wails.Run(&options.App{
-		Title:         "Pomodoro",
+		Title:         "pmo",
 		Width:         320,
 		Height:        145,
 		Frameless:     true,
@@ -25,7 +26,11 @@ func main() {
 			Assets: assets,
 		},
 		BackgroundColour: &options.RGBA{R: 0, G: 0, B: 0, A: 0},
-		OnStartup:        app.startup,
+		OnStartup: func(ctx context.Context) {
+			if err := app.startup(ctx); err != nil {
+				panic(err)
+			}
+		},
 		Bind: []interface{}{
 			app,
 		},
