@@ -11,21 +11,40 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-// App struct
+// App struct represents the main application structure for the Pomodoro timer.
+// It manages the application state, database connection, and timer functionality.
+// The app uses SQLite for persistent storage of study sessions and implements
+// the core Pomodoro technique functionality including work sessions, breaks,
+// and session history tracking.
 type App struct {
+	// ctx holds the application context for runtime operations
 	ctx context.Context
-	db  *sql.DB
+
+	// db is the SQLite database connection for storing session data
+	db *sql.DB
 
 	// Pomodoro state
+	// task is the current task being worked on
 	task string
 
-	timerDuration int // in seconds
-	remaining     int // in seconds
-	running       bool
-	paused        bool
+	// timerDuration is the total duration of the current timer in seconds
+	timerDuration int
+
+	// remaining is the number of seconds remaining in the current timer
+	remaining int
+
+	// running indicates if the timer is currently running
+	running bool
+
+	// paused indicates if the timer is currently paused
+	paused bool
 }
 
-// NewApp creates a new App application struct
+// NewApp creates and initializes a new App instance with default values.
+// It sets up the initial state with:
+// - Empty task
+// - 25-minute timer duration (1500 seconds)
+// - Timer not running or paused
 func NewApp() *App {
 	return &App{
 		task:          "",
@@ -36,8 +55,17 @@ func NewApp() *App {
 	}
 }
 
-// startup is called when the app starts. The context is saved
-// so we can call the runtime methods
+// startup initializes the application when it starts.
+// It performs the following tasks:
+// - Saves the application context for runtime operations
+// - Creates the application data directory if it doesn't exist
+// - Initializes the SQLite database connection
+// - Creates the necessary database tables for session tracking
+//
+// The database is stored in the user's application data directory:
+// - Windows: %APPDATA%\Pomodoro\pomodoro.db
+// - macOS: ~/Library/Application Support/Pomodoro/pomodoro.db
+// - Linux: ~/.config/Pomodoro/pomodoro.db
 func (a *App) startup(ctx context.Context) error {
 	a.ctx = ctx
 
@@ -76,7 +104,10 @@ func (a *App) startup(ctx context.Context) error {
 	return err
 }
 
-// StartTimer starts or resumes the timer
+// StartTimer starts or resumes the Pomodoro timer.
+// If the timer is already running, it does nothing.
+// If the timer was paused, it resumes from the remaining time.
+// If starting fresh, it sets both the duration and remaining time to the provided duration.
 func (a *App) StartTimer(duration int) error {
 	if a.running {
 		return nil
@@ -104,7 +135,12 @@ func (a *App) PauseTimer() error {
 	return nil
 }
 
-// ResetTimer resets the timer to its initial state
+// ResetTimer resets the timer to its initial state.
+// This includes:
+// - Stopping the timer
+// - Clearing the pause state
+// - Resetting the remaining time to the initial duration
+// - Clearing the current task
 func (a *App) ResetTimer() error {
 	a.running = false
 	a.paused = false
@@ -113,7 +149,8 @@ func (a *App) ResetTimer() error {
 	return nil
 }
 
-// SetTask sets the current task
+// SetTask sets the name of the current task to work on.
+// The task name is used when saving session data to the database.
 func (a *App) SetTask(task string) error {
 	a.task = task
 	return nil
@@ -127,7 +164,8 @@ func (a *App) GetTimer() interface{} {
 	return a.remaining
 }
 
-// GetTask returns the current task
+// GetTask returns the name of the current task being worked on.
+// Returns an empty string if no task is set.
 func (a *App) GetTask() string {
 	return a.task
 }
@@ -239,7 +277,15 @@ func (a *App) GetSessionHistory() ([]SessionRecord, error) {
 	return sessions, rows.Err()
 }
 
-// SaveCompletedSession saves a completed pomodoro session to the database
+// SaveCompletedSession saves a completed Pomodoro session to the database.
+// A session is only saved if there is a task name set.
+// Parameters:
+// - startTime: When the session started
+// - endTime: When the session ended
+// - completedCycles: Number of completed Pomodoro cycles
+//
+// The session is marked as completed (is_completed = 1) in the database.
+// Duration is calculated in minutes from the start and end times.
 func (a *App) SaveCompletedSession(startTime time.Time, endTime time.Time, completedCycles int) error {
 	if a.task == "" {
 		return nil // Don't save sessions with no task name
@@ -257,8 +303,15 @@ func (a *App) SaveCompletedSession(startTime time.Time, endTime time.Time, compl
 	return err
 }
 
-// SavePartialSession saves a partially completed pomodoro session to the database
-// Only saves if at least one cycle was completed
+// SavePartialSession saves a partially completed Pomodoro session to the database.
+// A session is only saved if there is a task name and at least one completed cycle.
+// Parameters:
+// - startTime: When the session started
+// - endTime: When the session was interrupted
+// - completedCycles: Number of completed Pomodoro cycles
+//
+// The session is marked as incomplete (is_completed = 0) in the database.
+// Duration is calculated in minutes from the start and end times.
 func (a *App) SavePartialSession(startTime time.Time, endTime time.Time, completedCycles int) error {
 	if a.task == "" || completedCycles < 1 {
 		return nil // Don't save sessions with no task name or no completed cycles

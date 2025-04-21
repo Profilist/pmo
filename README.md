@@ -1,19 +1,43 @@
-# README
+# 🌿•₊✧ pmo 💻 ⋆⭒˚☕️｡⋆
+> A minimal Pomodoro timer desktop app 
 
-## About
+Built for myself so I can focus better using the Pomodoro Technique. Created with React and Go using Wails, featuring local SQLite data persistence to track study sessions. 
 
-This is the official Wails React-TS template.
+## Features
 
-You can configure the project by editing `wails.json`. More information about the project settings can be found
-here: https://wails.io/docs/reference/project-config
+- Simple Pomodoro timer that always sits on top of your screen
+- Local SQLite database for storing study sessions 
+![Timer](https://i.imgur.com/kshB4xp.png)
+![History](https://i.imgur.com/kWgFBf2.png)
 
-## Live Development
+## Technologies
 
-To run in live development mode, run `wails dev` in the project directory. This will run a Vite development
-server that will provide very fast hot reload of your frontend changes. If you want to develop in a browser
-and have access to your Go methods, there is also a dev server that runs on http://localhost:34115. Connect
-to this in your browser, and you can call your Go code from devtools.
+- Frontend: React with TypeScript
+- Backend: Go with Wails framework
+- Database: SQLite
 
-## Building
+## Prerequisites
 
-To build a redistributable, production mode package, use `wails build`.
+- Go 1.18 or later
+- Node.js 14 or later
+- Wails CLI
+
+## Installation
+
+1. Clone the repository
+2. Install Wails CLI if not already installed:
+   ```bash
+   go install github.com/wailsapp/wails/v2/cmd/wails@latest
+   ```
+3. Install frontend dependencies:
+   ```bash
+   cd frontend
+   npm install
+   ```
+4. Build the application:
+   ```bash
+   wails build
+   ```
+
+## License
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

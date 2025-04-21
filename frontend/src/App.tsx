@@ -15,9 +15,9 @@ import {
   SavePartialSession,
 } from "../wailsjs/go/main/App";
 
-const WORK_TIME = 25 * 60; // change to 25 * 60 for production
-const SHORT_BREAK = 5 * 60; // change to 5 * 60 for production
-const LONG_BREAK = 30 * 60; // change to 30 * 60 for production
+const WORK_TIME = 25 * 60;
+const SHORT_BREAK = 5 * 60;
+const LONG_BREAK = 30 * 60;
 
 export default function PomodoroTimer() {
   const [taskName, setTaskName] = useState("");
@@ -190,10 +190,9 @@ export default function PomodoroTimer() {
     <div
       ref={containerRef}
       className={cn(
-        "fixed rounded-xl bg-black/80 shadow-lg select-none transition-all duration-300 overflow-hidden w-80"
+        "fixed rounded-xl bg-[#06080c] shadow-lg select-none transition-all duration-300 overflow-hidden w-80"
       )}
     >
-      {/* Drag handle */}
       <div 
         className="h-6 flex items-center justify-center cursor-move bg-zinc-900/50 hover:bg-zinc-900/80 transition-colors"
         style={{ '--wails-draggable': 'drag' } as React.CSSProperties}
