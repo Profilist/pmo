@@ -2,8 +2,6 @@ package main
 
 import (
 	"context"
-
-	"github.com/wailsapp/wails/v2/pkg/runtime"
 )
 
 // App struct
@@ -34,9 +32,6 @@ func NewApp() *App {
 // so we can call the runtime methods
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
-	// Lock window size
-	runtime.WindowSetMinSize(ctx, 320, 145)
-	runtime.WindowSetMaxSize(ctx, 320, 145)
 }
 
 // StartTimer starts or resumes the timer

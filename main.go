@@ -15,10 +15,12 @@ func main() {
 	app := NewApp()
 
 	err := wails.Run(&options.App{
-		Title:     "Pomodoro",
-		Width:     320,
-		Height:    145,
-		Frameless: true,
+		Title:         "Pomodoro",
+		Width:         320,
+		Height:        145,
+		Frameless:     true,
+		DisableResize: true,
+		AlwaysOnTop:   true,
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},
@@ -28,7 +30,7 @@ func main() {
 			app,
 		},
 		Windows: &windows.Options{
-			DisableWindowIcon:                 true,
+			DisableWindowIcon:                 false,
 			DisableFramelessWindowDecorations: false,
 			WebviewIsTransparent:              true,
 			WindowIsTranslucent:               true,

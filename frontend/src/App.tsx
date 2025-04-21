@@ -12,10 +12,16 @@ import {
   GetTask,
 } from "../wailsjs/go/main/App";
 
+const WORK_TIME = 5; // change to 25 * 60 for production
+const SHORT_BREAK = 4; // change to 5 * 60 for production
+const LONG_BREAK = 10; // change to 30 * 60 for production
+
 export default function PomodoroTimer() {
   const [taskName, setTaskName] = useState("");
-  const [timeLeft, setTimeLeft] = useState(5); // 5 seconds for testing
+  const [timeLeft, setTimeLeft] = useState(WORK_TIME);
   const [isRunning, setIsRunning] = useState(false);
+  const [pomodoroCount, setPomodoroCount] = useState(0);
+  const [isBreak, setIsBreak] = useState(false);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const containerRef = useRef(null);
@@ -35,17 +41,51 @@ export default function PomodoroTimer() {
               .play()
               .catch((err) => console.log("Audio playback failed:", err));
 
+            // Handle cycle transitions
+            if (!isBreak) {
+              // Work period finished
+              const completedPomodoros = pomodoroCount + 1;
+              if (completedPomodoros === 4) {
+                // Start long break after 4 Pomodoros
+                setTimeLeft(LONG_BREAK);
+                setIsBreak(true);
+                setPomodoroCount(0); // Reset for next cycle
+              } else {
+                // Start short break
+                setTimeLeft(SHORT_BREAK);
+                setIsBreak(true);
+                setPomodoroCount(completedPomodoros);
+              }
+            } else {
+              // Break finished
+              if (pomodoroCount === 0) {
+                // After long break, allow new task
+                ResetTimer();
+                setTaskName("");
+                setTimeLeft(WORK_TIME);
+              } else {
+                // Start next work period
+                setTimeLeft(WORK_TIME);
+              }
+              setIsBreak(false);
+            }
+
+            // Start next timer automatically
+            if (pomodoroCount !== 0 || !isBreak) {
+              setTimeout(() => {
+                setIsRunning(true);
+              }, 1000);
+            }
+
             // Show notification
             if (Notification.permission === "granted") {
               GetTask().then((currentTask) => {
+                const phase = isBreak ? "Break" : "Work";
                 new Notification("Pomodoro Timer", {
-                  body: `Time's up for task: ${currentTask || "Unnamed Task"}`,
+                  body: `${phase} period finished for task: ${currentTask || "Unnamed Task"}`,
                 });
               });
             }
-
-            // Reset task in backend
-            ResetTimer();
           }
           return newTime;
         });
@@ -70,15 +110,15 @@ export default function PomodoroTimer() {
     
     try {
       // If we're not paused, this is a new timer
-      if (!taskName && timeLeft === 5) {
+      if (!taskName && timeLeft === WORK_TIME) {
         return; // Don't start if no task and timer is at initial state
       }
 
       // Only set task and reset time if we're not resuming from pause
-      if (timeLeft === 5) {
+      if (timeLeft === WORK_TIME) {
         await SetTask(taskName);
-        await StartTimer(5); // 5 seconds for testing
-        setTimeLeft(5);
+        await StartTimer(WORK_TIME);
+        setTimeLeft(WORK_TIME);
       } else {
         // We're resuming from pause
         await StartTimer(timeLeft);
@@ -103,8 +143,10 @@ export default function PomodoroTimer() {
     try {
       await ResetTimer();
       setIsRunning(false);
-      setTimeLeft(5);
+      setTimeLeft(WORK_TIME);
       setTaskName('');
+      setPomodoroCount(0);
+      setIsBreak(false);
     } catch (error) {
       console.error('Failed to reset timer:', error);
     }
@@ -120,8 +162,9 @@ export default function PomodoroTimer() {
     }
   };
 
-  // Calculate progress percentage
-  const progressPercentage = ((5 - timeLeft) / (5)) * 100;
+  // Calculate progress percentage based on current phase
+  const currentPhaseTime = isBreak ? (pomodoroCount === 0 ? LONG_BREAK : SHORT_BREAK) : WORK_TIME;
+  const progressPercentage = ((currentPhaseTime - timeLeft) / currentPhaseTime) * 100;
 
   return (
     <div
