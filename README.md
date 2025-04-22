@@ -3,6 +3,8 @@
 
 Built for myself so I can focus better using the Pomodoro Technique. Created with React and Go using Wails, featuring local SQLite data persistence to track study sessions. 
 
+Download the [lastest release here](https://github.com/Profilist/pmo/releases/tag/v1.0.0)!
+
 ## Features ✨
 
 - Simple Pomodoro timer that always sits on top of your screen
