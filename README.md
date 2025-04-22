@@ -41,5 +41,22 @@ Built for myself so I can focus better using the Pomodoro Technique. Created wit
    wails build
    ```
 
+## Release Process 🚀
+
+This project uses GitHub Actions to automatically build releases for both Windows and macOS.
+
+To create a new release:
+
+1. Update version in `wails.json`
+2. Create and push a new tag:
+   ```bash
+   git tag v1.0.0  # Use appropriate version
+   git push origin v1.0.0
+   ```
+3. GitHub Actions will automatically:
+   - Build Windows and macOS versions
+   - Create a draft release with both executables
+   - You can then review and publish the release
+
 ## License 📜
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

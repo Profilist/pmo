@@ -9,5 +9,16 @@
   "author": {
     "name": "Larris Xie",
     "email": "larris.xie@gmail.com"
+  },
+  "info": {
+    "companyName": "pmo",
+    "productName": "pmo",
+    "productVersion": "1.0.0",
+    "copyright": "Copyright © 2024 Larris Xie",
+    "comments": "Minimal Pomodoro Timer"
+  },
+  "signing": {
+    "certificate": "./certificates/pmo_developer_cert.pfx",
+    "password": "${PMO_CERT_PASSWORD}"
   }
 }
