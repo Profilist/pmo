@@ -64,11 +64,11 @@ To create a new release:
 
 1. Update version in `wails.json`
 2. Create and push a new tag:
-   ```bash
+```bash
    git tag v1.0.0  # Use appropriate version
    git push origin v1.0.0
    ```
-3. GitHub Actions will automatically:
+4. GitHub Actions will automatically:
    - Build Windows and macOS versions
    - Create a draft release with both executables
    - You can then review and publish the release
