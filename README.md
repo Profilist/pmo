@@ -33,15 +33,28 @@ Download the [lastest release here](https://github.com/Profilist/pmo/releases/ta
    ```bash
    go install github.com/wailsapp/wails/v2/cmd/wails@latest
    ```
-4. Install frontend dependencies:
+3. Install frontend dependencies:
    ```bash
    cd frontend
    npm install
    ```
-5. Build the application:
+4. Build the application:
+
+   **Windows**:
    ```bash
    wails build
    ```
+
+   **macOS**:
+   ```bash
+   # For development/personal use
+   wails build -platform darwin/universal
+
+   # First time running the app:
+   # Right-click the app and select 'Open' to bypass Gatekeeper warning
+   ```
+
+   > Note for Mac users: Building locally will create an unsigned app. This is fine for personal use but will show security warnings. For distribution to other users, an Apple Developer certificate is required.
 
 ## Release Process 🚀
 

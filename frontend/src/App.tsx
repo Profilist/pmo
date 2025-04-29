@@ -15,19 +15,22 @@ import {
   SavePartialSession,
 } from "../wailsjs/go/main/App";
 
-const WORK_TIME = 25 * 60;
-const SHORT_BREAK = 5 * 60;
-const LONG_BREAK = 30 * 60;
+const WORK_TIME = 25 * 60; // 25 minutes
+const SHORT_BREAK = 5 * 60; // 5 minutes
+const LONG_BREAK = 30 * 60; // 30 minutes
 
 export default function PomodoroTimer() {
+  const sessionCompletedRef = useRef(false);
+  const [isSessionActive, setIsSessionActive] = useState(false);
   const [taskName, setTaskName] = useState("");
   const [timeLeft, setTimeLeft] = useState(WORK_TIME);
   const [isRunning, setIsRunning] = useState(false);
-  const [pomodoroCount, setPomodoroCount] = useState(0);
+  const [pomodoroCount, setPomodoroCount] = useState(1);
   const [isBreak, setIsBreak] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [sessionStartTime, setSessionStartTime] = useState<Date | null>(null);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [lastBreakWasLong, setLastBreakWasLong] = useState(false);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const containerRef = useRef(null);
@@ -50,38 +53,47 @@ export default function PomodoroTimer() {
             // Handle cycle transitions
             if (!isBreak) {
               // Work period finished
-              const completedPomodoros = pomodoroCount + 1;
-              if (completedPomodoros === 4) {
-                // Start long break after 4 Pomodoros
+              if (pomodoroCount === 4) {
+                // Save completed session right before long break
+                if (sessionStartTime && !sessionCompletedRef.current) {
+                  SaveCompletedSession(sessionStartTime, new Date(), 4);
+                  sessionCompletedRef.current = true;
+                }
                 setTimeLeft(LONG_BREAK);
                 setIsBreak(true);
-                setPomodoroCount(0); // Reset for next cycle
+                setSessionStartTime(null); // Reset session start
+                setLastBreakWasLong(true);
               } else {
                 // Start short break
                 setTimeLeft(SHORT_BREAK);
                 setIsBreak(true);
-                setPomodoroCount(completedPomodoros);
+                setLastBreakWasLong(false);
               }
             } else {
               // Break finished
-              if (pomodoroCount === 0) {
-                // After long break, save completed session and reset
-                if (sessionStartTime) {
-                  SaveCompletedSession(sessionStartTime, new Date(), 4);
-                }
+              if (lastBreakWasLong) {
+                // After long break, reset for next cycle
                 ResetTimer();
                 setTaskName("");
                 setTimeLeft(WORK_TIME);
                 setSessionStartTime(null);
+                setLastBreakWasLong(false);
+                setIsRunning(false);
+                setIsBreak(false);
+                setPomodoroCount(1); 
+                sessionCompletedRef.current = false; 
+                setIsSessionActive(false); 
+                return 0;
               } else {
                 // Start next work period
                 setTimeLeft(WORK_TIME);
+                setPomodoroCount(pomodoroCount + 1);
+                setIsBreak(false);
               }
-              setIsBreak(false);
             }
 
             // Start next timer automatically
-            if (pomodoroCount !== 0 || !isBreak) {
+            if (!(lastBreakWasLong && isBreak)) {
               setTimeout(() => {
                 setIsRunning(true);
               }, 1000);
@@ -117,6 +129,8 @@ export default function PomodoroTimer() {
 
   const handleStart = async () => {
     if (!isRunning) {
+      sessionCompletedRef.current = false; // Reset flag on manual start
+      setIsSessionActive(true); // Session is now active
       if (!sessionStartTime) {
         setSessionStartTime(new Date());
       }
@@ -164,9 +178,10 @@ export default function PomodoroTimer() {
       setIsPaused(false);
       setTimeLeft(WORK_TIME);
       setTaskName('');
-      setPomodoroCount(0);
+      setPomodoroCount(1);
       setIsBreak(false);
       setSessionStartTime(null);
+      setIsSessionActive(false); // Session is no longer active
     } catch (error) {
       console.error('Failed to reset timer:', error);
     }
@@ -183,7 +198,7 @@ export default function PomodoroTimer() {
   };
 
   // Calculate progress percentage based on current phase
-  const currentPhaseTime = isBreak ? (pomodoroCount === 0 ? LONG_BREAK : SHORT_BREAK) : WORK_TIME;
+  const currentPhaseTime = isBreak ? (pomodoroCount === 4 ? LONG_BREAK : SHORT_BREAK) : WORK_TIME;
   const progressPercentage = ((currentPhaseTime - timeLeft) / currentPhaseTime) * 100;
 
   return (
@@ -208,7 +223,7 @@ export default function PomodoroTimer() {
             value={taskName}
             onChange={handleTaskInputChange}
             onKeyDown={handleTaskInputKeyDown}
-            disabled={isRunning || isBreak || isPaused}
+            disabled={isSessionActive}
             className="bg-zinc-800/80 border-none text-white placeholder:text-zinc-500 focus-visible:ring-0 focus-visible:ring-offset-0 pr-10"
           />
           <Button
@@ -231,7 +246,7 @@ export default function PomodoroTimer() {
         </div>
         <div className="flex space-x-2">
           <div className="h-8 w-8 rounded-full p-0 bg-zinc-800 text-white flex items-center justify-center">
-            {pomodoroCount+1}
+            {pomodoroCount}
           </div>
           {!isRunning ? (
             <Button

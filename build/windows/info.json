@@ -6,7 +6,7 @@
 		"0000": {
 			"ProductVersion": "1.0",
 			"CompanyName": "pmo",
-			"FileDescription": "A minimalistic Pomodoro timer desktop app",
+			"FileDescription": "pmo",
 			"LegalCopyright": "Larris Xie",
 			"ProductName": "pmo",
 			"Comments": "A minimalistic Pomodoro timer desktop app built using Wails"
